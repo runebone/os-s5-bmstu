@@ -80,26 +80,6 @@ void consumer(const int semid)
     exit(0);
 }
 
-void create_producers()
-{
-    pid_t pid = -1;
-    for (int i = 0; i < NP; i++)
-    {
-        if ((pid = fork()) == -1) { perror("p can't fork\n"); exit(1); }
-        if (pid == 0) { producer(semid); return; }
-    }
-}
-
-void create_consumers()
-{
-    pid_t pid = -1;
-    for (int i = 0; i < NC; i++)
-    {
-        if ((pid = fork()) == -1) { perror("c can't fork\n"); exit(1); }
-        if (pid == 0) { consumer(semid); return; }
-    }
-}
-
 int main()
 {
     signal(SIGTSTP, sig_handler);
@@ -125,8 +105,17 @@ int main()
 	int csb = semctl(semid, SB, SETVAL, 1);
 	if (cse == -1 || csf == -1 || csb == -1) { perror("semctl\n"); exit(1); }
 
-    create_producers();
-    create_consumers();
+    pid_t pid = -1;
+    for (int i = 0; i < NP; i++)
+    {
+        if ((pid = fork()) == -1) { perror("p can't fork\n"); exit(1); }
+        if (pid == 0) { producer(semid); }
+    }
+    for (int i = 0; i < NC; i++)
+    {
+        if ((pid = fork()) == -1) { perror("c can't fork\n"); exit(1); }
+        if (pid == 0) { consumer(semid); }
+    }
 
 	for (int i = 0; i < (NP + NC); i++) wait(NULL);
 
