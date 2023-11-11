@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <time.h>
+#include "check_macros.h"
 
 #define BUFSIZE 128
 #define PERMS S_IRWXU | S_IRWXG | S_IRWXO
@@ -26,14 +28,20 @@ char **ptr_cons;
 char *conv; // Conveyor
 char *ch;
 
-int flag = 0;
-void sig_handler(int sig_num) { flag = 1; }
+int flag = 1;
+void sig_handler(int sig_num)
+{
+    flag = 0;
+    printf("pid: %d, signal: %d\n", getpid(), sig_num);
+}
 
 void producer(const int semid)
 {
+    srand(time(NULL) + getpid());
     int exit_flag = 0;
-    while (!flag)
+    while (flag)
     {
+        usleep((double)rand() / RAND_MAX * 1000000);
         int p = semop(semid, start_produce, 2);
         if (p == -1) { perror("p semop error p\n"); exit(1); }
         if (*ch > 'z')
@@ -47,7 +55,6 @@ void producer(const int semid)
             printf("Producer %d >>> %c (%p)\n", getpid(), **ptr_prod, *ptr_prod);
             (*ptr_prod)++;
             (*ch)++;
-            /* sleep(1); */
         }
         int v = semop(semid, stop_produce, 2);
         if (v == -1) { perror("p semop error v\n"); exit(1); }
@@ -58,9 +65,11 @@ void producer(const int semid)
 
 void consumer(const int semid)
 {
+    srand(time(NULL) + getpid());
     int exit_flag = 0;
-    while (!flag)
+    while (flag)
     {
+        usleep((double)rand() / RAND_MAX * 1000000);
         int p = semop(semid, start_consume, 2);
         if (p == -1) { perror("c semop error p\n"); exit(1); }
         printf("Consumer %d <<< %c (%p)\n", getpid(), **ptr_cons, *ptr_cons);
@@ -82,7 +91,13 @@ void consumer(const int semid)
 
 int main()
 {
-    signal(SIGTSTP, sig_handler);
+    /* srand(time(NULL)); */
+    /* signal(SIGTSTP, sig_handler); */
+    signal(SIGINT, sig_handler);
+
+    /* int producer_pid[NP]; */
+    /* int consumer_pid[NC]; */
+    pid_t pids[NP + NC];
 
     int memkey = 0;
     int fd = shmget(memkey, BUFSIZE, IPC_CREAT | PERMS);
@@ -108,18 +123,35 @@ int main()
     pid_t pid = -1;
     for (int i = 0; i < NP; i++)
     {
-        if ((pid = fork()) == -1) { perror("p can't fork\n"); exit(1); }
+        pid = fork();
+        if (pid == -1) { perror("p can't fork\n"); exit(1); }
         if (pid == 0) { producer(semid); }
+        else { pids[i] = pid; }
     }
     for (int i = 0; i < NC; i++)
     {
-        if ((pid = fork()) == -1) { perror("c can't fork\n"); exit(1); }
+        pid = fork();
+        if (pid == -1) { perror("c can't fork\n"); exit(1); }
         if (pid == 0) { consumer(semid); }
+        else { pids[NP + i] = pid; }
     }
 
-	for (int i = 0; i < (NP + NC); i++) wait(NULL);
+	for (int i = 0; i < (NP + NC); i++) 
+    {
+        check_macros(pids[i]);
+    }
 
     if (shmdt(addr) == -1) { perror("shmdt\n"); exit(1); }
 
-    // TODO: почистить SEM и SHM как-то
+    if (shmctl(fd, IPC_RMID, (void*)addr) < 0)
+    {
+        perror("rm shm error\n");
+        exit(1);
+    }
+
+	if (semctl(semid, 0, IPC_RMID) < 0)
+    {
+        perror("rm sem error\n");
+        exit(1);
+    }
 }
