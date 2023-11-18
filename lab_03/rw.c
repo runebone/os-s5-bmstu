@@ -13,30 +13,34 @@
 #define NW  3
 #define NR  5
 
+#define R_DELAY 1
+#define W_DELAY 1
+
 #define C_WAITING_R 0
 #define C_ACTIVE_R 1
 #define C_WAITING_W 2
 #define B_ACTIVE_W 3
 
-struct sembuf sem_start_read[4] = {
+struct sembuf sem_start_read[] = {
     { C_WAITING_R,  1, 0 },
     { B_ACTIVE_W,   0, 0 },
+    { C_WAITING_W,  0, 0 },
     { C_WAITING_R, -1, 0 },
     { C_ACTIVE_R,   1, 0 },
 };
 
-struct sembuf sem_stop_read[1] = {
+struct sembuf sem_stop_read[] = {
     { C_ACTIVE_R,  -1, 0 },
 };
 
-struct sembuf sem_start_write[4] = {
+struct sembuf sem_start_write[] = {
     { C_WAITING_W,  1, 0 },
     { C_ACTIVE_R,   0, 0 },
     { B_ACTIVE_W,  -1, 0 },
     { C_WAITING_W, -1, 0 },
 };
 
-struct sembuf sem_stop_write[1] = {
+struct sembuf sem_stop_write[] = {
     { B_ACTIVE_W,   1, 0 },
 };
 
@@ -51,7 +55,7 @@ void sig_handler(int sig_num)
 
 int start_read(const int semid)
 {
-    return semop(semid, sem_start_read, 4);
+    return semop(semid, sem_start_read, 5);
 }
 
 int stop_read(const int semid)
@@ -75,7 +79,7 @@ void reader(const int semid, const char *shm)
     printf("R[%5d] created.\n", getpid());
     while (flag)
     {
-        usleep((double)rand() / RAND_MAX * 1000000);
+        usleep((double)rand() / RAND_MAX * 1000000 * R_DELAY);
         if (start_read(semid) == -1)
         {
             perror("start read error\n");
@@ -99,7 +103,7 @@ void writer(const int semid, char *shm)
     printf("W[%5d] created.\n", getpid());
     while (flag)
     {
-        usleep((double)rand() / RAND_MAX * 1000000);
+        usleep((double)rand() / RAND_MAX * 1000000 * W_DELAY);
         if (start_write(semid) == -1)
         {
             perror("start write error\n");
