@@ -8,58 +8,48 @@
 
 #include <rpc/rpc.h>
 
-#include <pthread.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-struct client_data {
+struct REQUEST {
+	int index;
+	int number;
 	int pid;
-	int ticket_number;
 };
-typedef struct client_data client_data;
+typedef struct REQUEST REQUEST;
 
-struct service_data {
-	int served_by_pid;
-	int served_by_tid;
-	char bun_name[255];
-	quad_t service_time_ms;
-};
-typedef struct service_data service_data;
-
-#define BAKERY_PROG 0x21234567
-#define BAKERY_VERS 1
+#define BAKERY_PROG 0x20000001
+#define BAKERY_VER 1
 
 #if defined(__STDC__) || defined(__cplusplus)
-#define get_ticket 1
-extern  enum clnt_stat get_ticket_1(client_data *, client_data *, CLIENT *);
-extern  bool_t get_ticket_1_svc(client_data *, client_data *, struct svc_req *);
-#define get_service 2
-extern  enum clnt_stat get_service_1(client_data *, service_data *, CLIENT *);
-extern  bool_t get_service_1_svc(client_data *, service_data *, struct svc_req *);
+#define GET_NUMBER 1
+extern  struct REQUEST * get_number_1(struct REQUEST *, CLIENT *);
+extern  struct REQUEST * get_number_1_svc(struct REQUEST *, struct svc_req *);
+#define BAKERY_SERVICE 2
+extern  int * bakery_service_1(struct REQUEST *, CLIENT *);
+extern  int * bakery_service_1_svc(struct REQUEST *, struct svc_req *);
 extern int bakery_prog_1_freeresult (SVCXPRT *, xdrproc_t, caddr_t);
 
 #else /* K&R C */
-#define get_ticket 1
-extern  enum clnt_stat get_ticket_1();
-extern  bool_t get_ticket_1_svc();
-#define get_service 2
-extern  enum clnt_stat get_service_1();
-extern  bool_t get_service_1_svc();
+#define GET_NUMBER 1
+extern  struct REQUEST * get_number_1();
+extern  struct REQUEST * get_number_1_svc();
+#define BAKERY_SERVICE 2
+extern  int * bakery_service_1();
+extern  int * bakery_service_1_svc();
 extern int bakery_prog_1_freeresult ();
 #endif /* K&R C */
 
 /* the xdr functions */
 
 #if defined(__STDC__) || defined(__cplusplus)
-extern  bool_t xdr_client_data (XDR *, client_data*);
-extern  bool_t xdr_service_data (XDR *, service_data*);
+extern  bool_t xdr_REQUEST (XDR *, REQUEST*);
 
 #else /* K&R C */
-extern bool_t xdr_client_data ();
-extern bool_t xdr_service_data ();
+extern bool_t xdr_REQUEST ();
 
 #endif /* K&R C */
 

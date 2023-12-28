@@ -6,31 +6,15 @@
 #include "bakery.h"
 
 bool_t
-xdr_client_data (XDR *xdrs, client_data *objp)
+xdr_REQUEST (XDR *xdrs, REQUEST *objp)
 {
 	register int32_t *buf;
 
+	 if (!xdr_int (xdrs, &objp->index))
+		 return FALSE;
+	 if (!xdr_int (xdrs, &objp->number))
+		 return FALSE;
 	 if (!xdr_int (xdrs, &objp->pid))
-		 return FALSE;
-	 if (!xdr_int (xdrs, &objp->ticket_number))
-		 return FALSE;
-	return TRUE;
-}
-
-bool_t
-xdr_service_data (XDR *xdrs, service_data *objp)
-{
-	register int32_t *buf;
-
-	int i;
-	 if (!xdr_int (xdrs, &objp->served_by_pid))
-		 return FALSE;
-	 if (!xdr_int (xdrs, &objp->served_by_tid))
-		 return FALSE;
-	 if (!xdr_vector (xdrs, (char *)objp->bun_name, 255,
-		sizeof (char), (xdrproc_t) xdr_char))
-		 return FALSE;
-	 if (!xdr_quad_t (xdrs, &objp->service_time_ms))
 		 return FALSE;
 	return TRUE;
 }

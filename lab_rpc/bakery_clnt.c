@@ -9,20 +9,32 @@
 /* Default timeout can be changed using clnt_control() */
 static struct timeval TIMEOUT = { 25, 0 };
 
-enum clnt_stat 
-get_ticket_1(client_data *argp, client_data *clnt_res, CLIENT *clnt)
+struct REQUEST *
+get_number_1(struct REQUEST *argp, CLIENT *clnt)
 {
-	return (clnt_call(clnt, get_ticket,
-		(xdrproc_t) xdr_client_data, (caddr_t) argp,
-		(xdrproc_t) xdr_client_data, (caddr_t) clnt_res,
-		TIMEOUT));
+	static struct REQUEST clnt_res;
+
+	memset((char *)&clnt_res, 0, sizeof(clnt_res));
+	if (clnt_call (clnt, GET_NUMBER,
+		(xdrproc_t) xdr_REQUEST, (caddr_t) argp,
+		(xdrproc_t) xdr_REQUEST, (caddr_t) &clnt_res,
+		TIMEOUT) != RPC_SUCCESS) {
+		return (NULL);
+	}
+	return (&clnt_res);
 }
 
-enum clnt_stat 
-get_service_1(client_data *argp, service_data *clnt_res, CLIENT *clnt)
+int *
+bakery_service_1(struct REQUEST *argp, CLIENT *clnt)
 {
-	return (clnt_call(clnt, get_service,
-		(xdrproc_t) xdr_client_data, (caddr_t) argp,
-		(xdrproc_t) xdr_service_data, (caddr_t) clnt_res,
-		TIMEOUT));
+	static int clnt_res;
+
+	memset((char *)&clnt_res, 0, sizeof(clnt_res));
+	if (clnt_call (clnt, BAKERY_SERVICE,
+		(xdrproc_t) xdr_REQUEST, (caddr_t) argp,
+		(xdrproc_t) xdr_int, (caddr_t) &clnt_res,
+		TIMEOUT) != RPC_SUCCESS) {
+		return (NULL);
+	}
+	return (&clnt_res);
 }
