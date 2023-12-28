@@ -10,11 +10,11 @@
 static struct timeval TIMEOUT = { 25, 0 };
 
 enum clnt_stat 
-get_ticket_1(client_data *argp, void *clnt_res, CLIENT *clnt)
+get_ticket_1(client_data *argp, client_data *clnt_res, CLIENT *clnt)
 {
 	return (clnt_call(clnt, get_ticket,
 		(xdrproc_t) xdr_client_data, (caddr_t) argp,
-		(xdrproc_t) xdr_void, (caddr_t) clnt_res,
+		(xdrproc_t) xdr_client_data, (caddr_t) clnt_res,
 		TIMEOUT));
 }
 

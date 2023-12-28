@@ -34,8 +34,8 @@ typedef struct service_data service_data;
 
 #if defined(__STDC__) || defined(__cplusplus)
 #define get_ticket 1
-extern  enum clnt_stat get_ticket_1(client_data *, void *, CLIENT *);
-extern  bool_t get_ticket_1_svc(client_data *, void *, struct svc_req *);
+extern  enum clnt_stat get_ticket_1(client_data *, client_data *, CLIENT *);
+extern  bool_t get_ticket_1_svc(client_data *, client_data *, struct svc_req *);
 #define get_service 2
 extern  enum clnt_stat get_service_1(client_data *, service_data *, CLIENT *);
 extern  bool_t get_service_1_svc(client_data *, service_data *, struct svc_req *);

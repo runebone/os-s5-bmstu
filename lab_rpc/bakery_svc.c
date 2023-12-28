@@ -12,6 +12,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include <unistd.h>
+
 #ifndef SIG_PF
 #define SIG_PF void(*)(int)
 #endif
@@ -24,6 +26,7 @@ bakery_prog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 		client_data get_service_1_arg;
 	} argument;
 	union {
+		client_data get_ticket_1_res;
 		service_data get_service_1_res;
 	} result;
 	bool_t retval;
@@ -37,7 +40,7 @@ bakery_prog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 
 	case get_ticket:
 		_xdr_argument = (xdrproc_t) xdr_client_data;
-		_xdr_result = (xdrproc_t) xdr_void;
+		_xdr_result = (xdrproc_t) xdr_client_data;
 		local = (bool_t (*) (char *, void *,  struct svc_req *))get_ticket_1_svc;
 		break;
 
@@ -57,6 +60,11 @@ bakery_prog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 		return;
 	}
 	retval = (bool_t) (*local)((char *)&argument, (void *)&result, rqstp);
+    // NOTE @ Modified by me
+    if (rqstp->rq_proc == get_service)
+    {
+    }
+    // XXX
 	if (retval > 0 && !svc_sendreply(transp, (xdrproc_t) _xdr_result, (char *)&result)) {
 		svcerr_systemerr (transp);
 	}
@@ -96,6 +104,10 @@ main (int argc, char **argv)
 		fprintf (stderr, "%s", "unable to register (BAKERY_PROG, BAKERY_VERS, tcp).");
 		exit(1);
 	}
+
+    // XXX @ Modified by me
+    printf("[SVC] Server pid: %d\n", getpid());
+    // XXX
 
 	svc_run ();
 	fprintf (stderr, "%s", "svc_run returned");

@@ -16,7 +16,7 @@ program BAKERY_PROG
 {
     version BAKERY_VERS
     {
-        void get_ticket(client_data*) = 1;
+        client_data get_ticket(client_data*) = 1;
         service_data get_service(client_data*) = 2;
     } = 1;
 } = 0x21234567;

@@ -11,12 +11,12 @@
 void bakery_prog_1(char *host)
 {
 	CLIENT *clnt;
-
-    client_data cdata;
-	service_data sdata;
-
 	enum clnt_stat retval_1;
+	client_data client_data_out;
+	client_data client_data_in;
 	enum clnt_stat retval_2;
+	service_data service_data_out;
+    service_data_out.served_by_tid = 0;
 
 #ifndef	DEBUG
 	clnt = clnt_create (host, BAKERY_PROG, BAKERY_VERS, "udp");
@@ -26,43 +26,56 @@ void bakery_prog_1(char *host)
 	}
 #endif	/* DEBUG */
 
-    cdata.pid = getpid();
+    client_data_in.pid = getpid();
+    client_data_in.ticket_number = -10;
 
-    printf("Client (pid: %d) is going to get ticket.\n", cdata.pid);
+    printf("pid: %d\n", getpid());
 
-	retval_1 = get_ticket_1(&cdata, NULL, clnt);
+	retval_1 = get_ticket_1(&client_data_in, &client_data_out, clnt);
 	if (retval_1 != RPC_SUCCESS) {
-		clnt_perror (clnt, "call failed");
-	}
+		clnt_perror(clnt, "call failed");
+	} else {
+        client_data_in = client_data_out;
+    }
 
-    printf("Client (pid: %d) got ticket %d and is going to get service.\n", cdata.pid, cdata.ticket_number);
+    printf("Client with pid %d got ticket %d\n", client_data_in.pid, client_data_in.ticket_number + 1);
 
-	retval_2 = get_service_1(&cdata, &sdata, clnt);
+	/* retval_2 = get_service_1(&client_data_in, &service_data_out, clnt); */
 	if (retval_2 != RPC_SUCCESS) {
-		clnt_perror (clnt, "call failed");
+		clnt_perror(clnt, "call failed");
 	}
-
-    printf("Client (pid: %d) got service:\n\
-- Served by pid: %d\n\
-- Served by tid: %d\n\
-- Service time: %ld ms\n\
-- Bun: %s", cdata.pid, sdata.served_by_pid, sdata.served_by_tid, sdata.service_time_ms, sdata.bun_name);
-
 #ifndef	DEBUG
 	clnt_destroy (clnt);
 #endif	 /* DEBUG */
+
+    /* while (service_data_out.served_by_tid == 0) {}; */
+
+    /* sleep(1); */
+
+    printf("Client with pid %d and ticket %d got served:\n"
+        "- served by pid: %d\n"
+        "- served by tid: %d\n"
+        /* "- service time: %ld\n" */
+        "- got bun: %s\n", client_data_in.pid, client_data_in.ticket_number + 1,
+        service_data_out.served_by_pid, service_data_out.served_by_tid,
+        /* service_data_out.service_time_ms, */
+        service_data_out.bun_name);
 }
 
 
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	char *host;
 
-	if (argc > 2) {
-		printf ("usage: %s server_host\n", argv[0]);
-		exit (1);
-	}
-	host = (argc == 2) ? argv[1] : "localhost";
-	bakery_prog_1 (host);
-exit (0);
+	if (argc < 2) {
+        host = "localhost";
+	} else if (argc == 2) {
+        host = argv[1];
+    } else {
+		printf("usage: %s server_host\n", argv[0]);
+		exit(1);
+    }
+
+	bakery_prog_1(host);
+    exit(0);
 }
